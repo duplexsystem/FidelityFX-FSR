@@ -53,11 +53,23 @@ void FSR_Filter::OnCreate(Device* pDevice, ResourceViewHeaps* pResourceViewHeaps
 	sd.MaxLOD = D3D12_FLOAT32_MAX;
 
 	DefineList defines;
+	if (pDevice->IsFp16Supported())
+	{
+		defines["SAMPLE_SLOW_FALLBACK"] = "0";
+		defines["SAMPLE_BILINEAR"] = "0";
+		defines["SAMPLE_RCAS"] = "0";
+		defines["SAMPLE_EASU"] = "0";
+		defines["SAMPLE_EASU_MOBILE"] = "1";
+		m_easuL.OnCreate(pDevice, pResourceViewHeaps, "FSR_Pass.hlsl", "mainCS", 1, 1, 64, 1, 1, &defines, 1, &sd);
+	}
+
 	defines["SAMPLE_SLOW_FALLBACK"] = (slowFallback ? "1" : "0");
 	defines["SAMPLE_BILINEAR"] = "0";
 	defines["SAMPLE_RCAS"] = "0";
 	defines["SAMPLE_EASU"] = "1";
+	defines["SAMPLE_EASU_MOBILE"] = "0";
 	m_easu.OnCreate(pDevice, pResourceViewHeaps, "FSR_Pass.hlsl", "mainCS", 1, 1, 64, 1, 1, &defines, 1, &sd);
+
 	defines["SAMPLE_EASU"] = "0";
 	defines["SAMPLE_RCAS"] = "1";
 	m_rcas.OnCreate(pDevice, pResourceViewHeaps, "FSR_Pass.hlsl", "mainCS", 1, 1, 64, 1, 1, &defines, 1, &sd);
@@ -94,6 +106,7 @@ void FSR_Filter::OnDestroyWindowSizeDependentResources()
 void FSR_Filter::OnDestroy()
 {
 	m_easu.OnDestroy();
+	m_easuL.OnDestroy();
 	m_rcas.OnDestroy();
 	m_bilinear.OnDestroy();
 }
@@ -116,9 +129,11 @@ void FSR_Filter::Upscale(ID3D12GraphicsCommandList* pCommandList, int displayWid
 	if (pState->m_nUpscaleType)
 	{
 		UserMarker marker(pCommandList, "FSR upscaling");
+		PostProcCS* easu = pState->bUseFSRMobile ? &m_easuL : &m_easu;
+
 		if (pState->bUseRcas)
 		{
-			m_easu.Draw(pCommandList, cbHandle, &m_intermediaryUav, &m_inputTextureSrv, dispatchX, dispatchY, 1);
+			easu->Draw(pCommandList, cbHandle, &m_intermediaryUav, &m_inputTextureSrv, dispatchX, dispatchY, 1);
 			{
 				FSRConstants consts = {};
 				FsrRcasCon(reinterpret_cast<AU1*>(&consts.Const0), pState->rcasAttenuation);
@@ -132,7 +147,7 @@ void FSR_Filter::Upscale(ID3D12GraphicsCommandList* pCommandList, int displayWid
 			pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_intermediary.GetResource(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
 		}
 		else
-			m_easu.Draw(pCommandList, cbHandle, &m_outputTextureUav, &m_inputTextureSrv, dispatchX, dispatchY, 1);
+			easu->Draw(pCommandList, cbHandle, &m_outputTextureUav, &m_inputTextureSrv, dispatchX, dispatchY, 1);
 	} else
 	{
 		UserMarker marker(pCommandList, "Bilinear upscaling");

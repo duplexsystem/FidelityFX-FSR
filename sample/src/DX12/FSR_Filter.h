@@ -35,6 +35,7 @@ public:
 
 private:
 	PostProcCS                      m_easu;
+	PostProcCS                      m_easuL;
 	PostProcCS                      m_rcas;
 	PostProcCS                      m_bilinear;
 	CBV_SRV_UAV                     m_outputTextureUav;

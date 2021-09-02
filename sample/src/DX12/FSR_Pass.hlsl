@@ -50,11 +50,12 @@ SamplerState		samLinearClamp : register(s0);
 	#include "ffx_a.h"
 	Texture2D<AH4> InputTexture : register(t0);
 	RWTexture2D<AH4> OutputTexture : register(u0);
-	#if SAMPLE_EASU
+	#if SAMPLE_EASU || SAMPLE_EASU_MOBILE
 		#define FSR_EASU_H 1
 		AH4 FsrEasuRH(AF2 p) { AH4 res = InputTexture.GatherRed(samLinearClamp, p, int2(0, 0)); return res; }
 		AH4 FsrEasuGH(AF2 p) { AH4 res = InputTexture.GatherGreen(samLinearClamp, p, int2(0, 0)); return res; }
-		AH4 FsrEasuBH(AF2 p) { AH4 res = InputTexture.GatherBlue(samLinearClamp, p, int2(0, 0)); return res; }	
+		AH4 FsrEasuBH(AF2 p) { AH4 res = InputTexture.GatherBlue(samLinearClamp, p, int2(0, 0)); return res; }
+		AH3 FsrEasuSampleH(AF2 p) { AH3 res = InputTexture.SampleLevel(samLinearClamp, p, 0).xyz; return res; }
 	#endif
 	#if SAMPLE_RCAS
 		#define FSR_RCAS_H
@@ -70,6 +71,13 @@ void CurrFilter(int2 pos)
 #if SAMPLE_BILINEAR
 	AF2 pp = (AF2(pos) * AF2_AU2(Const0.xy) + AF2_AU2(Const0.zw)) * AF2_AU2(Const1.xy) + AF2(0.5, -0.5) * AF2_AU2(Const1.zw);
 	OutputTexture[pos] = InputTexture.SampleLevel(samLinearClamp, pp, 0.0);
+#endif
+#if SAMPLE_EASU_MOBILE
+	AH3 c;
+	FsrEasuL(c, pos, Const0, Const1, Const2, Const3);
+	if (Sample.x == 1)
+		c *= c;
+	OutputTexture[pos] = AH4(c, 1);
 #endif
 #if SAMPLE_EASU
 	#if SAMPLE_SLOW_FALLBACK

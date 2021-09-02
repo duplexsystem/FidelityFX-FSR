@@ -46,6 +46,7 @@ struct State
 
 	bool  bUseTAA;
     bool  bUseRcas = true;
+    bool  bUseFSRMobile = false;
     float rcasAttenuation = 0.25f;
 	bool  bIsBenchmarking;
 

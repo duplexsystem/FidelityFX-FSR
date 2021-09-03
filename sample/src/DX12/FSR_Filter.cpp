@@ -61,6 +61,7 @@ void FSR_Filter::OnCreate(Device* pDevice, ResourceViewHeaps* pResourceViewHeaps
 		defines["SAMPLE_EASU"] = "0";
 		defines["SAMPLE_EASU_MOBILE"] = "1";
 		m_easuL.OnCreate(pDevice, pResourceViewHeaps, "FSR_Pass.hlsl", "mainCS", 1, 1, 64, 1, 1, &defines, 1, &sd);
+		m_easuLInitialized = true;
 	}
 
 	defines["SAMPLE_SLOW_FALLBACK"] = (slowFallback ? "1" : "0");
@@ -106,7 +107,10 @@ void FSR_Filter::OnDestroyWindowSizeDependentResources()
 void FSR_Filter::OnDestroy()
 {
 	m_easu.OnDestroy();
-	m_easuL.OnDestroy();
+	if (m_easuLInitialized)
+	{
+		m_easuL.OnDestroy();
+	}
 	m_rcas.OnDestroy();
 	m_bilinear.OnDestroy();
 }

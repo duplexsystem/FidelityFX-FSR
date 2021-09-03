@@ -36,6 +36,7 @@ public:
 private:
 	PostProcCS                      m_easu;
 	PostProcCS                      m_easuL;
+	bool                            m_easuLInitialized = false;
 	PostProcCS                      m_rcas;
 	PostProcCS                      m_bilinear;
 	CBV_SRV_UAV                     m_outputTextureUav;

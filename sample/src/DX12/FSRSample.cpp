@@ -606,7 +606,7 @@ void FSRSample::BuildUI()
             if (m_state.m_nUpscaleType == 1)
             {
                 if (m_device.IsFp16Supported())
-					ImGui::Checkbox("Use FSR Mobile", &m_state.bUseFSRMobile);
+                    ImGui::Checkbox("Use FSR Mobile", &m_state.bUseFSRMobile);
                 ImGui::Checkbox("FSR 1.0 Sharpening", &m_state.bUseRcas);
                 if( m_state.bUseRcas )
                     ImGui::SliderFloat("Sharpening attenuation", &m_state.rcasAttenuation, 0.0f, 2.0f);
